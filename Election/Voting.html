@@ -1,0 +1,1113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.5.2/dist/web3.min.js"></script>
+    <link rel="stylesheet" href="Voting.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Dapp</title>
+</head>
+<body>
+    <div class="container"> 
+		<div class="main"> 
+			<form class="form">
+				<label for="name">Name:</label>
+				<input type="text" id="_name" name="name"><br><br>
+				<label for="age">Age:</label>
+				<input type="number" id="_age" name="age"><br><br>
+				<label for="addr">Address:</label>
+				<input type="text" id="_candidateAddress" name="addr"><br><br>
+				<div> 
+						<button onclick="registerCandidate(document.getElementById('_name').value, document.getElementById('_age').value, document.getElementById('_candidateAddress').value)">Register Candidate</button>
+				</div>
+			</form>
+
+			<div class="voter">
+				<input type="address" class="VoterAddress" placeholder="VoterAddress" >
+				<input type="number" class="adharAddress" placeholder="adharAddress" >
+
+				<button onclick="whileListVoter()"> RegisterVoters</button>
+			</div>
+
+			<div class="voting"> 
+				<input type="address" class="candidateAddress" placeholder="candidate Address">
+			<button onclick="vote()">vote</button>
+			</div>
+		
+		</div>
+   
+<!-- <div> 
+     <button onclick="startVoting()">start voting </button>
+    </div>
+    <div>
+    <button onclick="stopVoting()">stop voting</button>
+    </div> -->
+    
+</div>
+
+    
+
+   
+    
+
+    <script>
+      
+        const polygonNetworkId = 80001;
+        
+        // Call registerCandidates functi_on
+        async function registerCandidate(_name,_age,_candidateAddress) {
+              if (typeof window.ethereum !== "undefined") {
+                console.log("MetaMask is installed!");
+
+                try {
+                    await ethereum.request({ method: "eth_requestAccounts" });
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+
+                const accounts = await ethereum.request({ method: "eth_accounts" });
+                console.log("Connected to MetaMask:", accounts[0]);
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.enable();
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}` }] }).catch(async () => {
+                    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}`, rpcUrl: 'https://rpc-mumbai.maticvigil.com/', nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }, blockExplorerUrls: ['https://explorer-mumbai.maticvigil.com/'] }] });
+                    });
+
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            const votingAbi = [
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "putVote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "registerCandidates",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "message",
+				"type": "string"
+			}
+		],
+		"name": "Success",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_voterAddress",
+				"type": "address"
+			}
+		],
+		"name": "whileListVoters",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidateList",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "candidateAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "votes",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "eventName",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVote",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voterList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "voted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "winnerAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+            
+            // Connect to Ethereum network through MetaMask
+            
+            
+            
+            // Define contract instance
+            const contractAddress = '0x191916340223252795E78e1d695a1aE0C9CDfF22'; // Replace with actual contract address
+            const votingContract = new web3.eth.Contract(votingAbi, contractAddress);
+
+            // const _name = document.querySelector(".candname").value;
+            // console.log(_name)
+            // const _age = document.querySelector(".age").value;
+            // console.log(_age)
+            // const AddressCand = document.querySelector(".Candidateaddress").value;
+
+            const name=document.getElementById('_name').value;
+            document.write(name);
+
+            const accounts = await web3.eth.getAccounts();
+            const owner = accounts[0];
+            const gas = await votingContract.methods.registerCandidates(_name, Number(_age), _candidateAddress).estimateGas({ from: owner });
+            console.log(gas);
+            const result = await votingContract.methods.registerCandidates(_name,  Number(_age), _candidateAddress).send({ from: owner, gas });
+            console.log(result);
+            // console.log(result.events.success.returnValue.msg);
+}
+
+// Call whileListVoters function
+async function whileListVoter() {
+    if (typeof window.ethereum !== "undefined") {
+                console.log("MetaMask is installed!");
+
+                try {
+                    await ethereum.request({ method: "eth_requestAccounts" });
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+
+                const accounts = await ethereum.request({ method: "eth_accounts" });
+                console.log("Connected to MetaMask:", accounts[0]);
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.enable();
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}` }] }).catch(async () => {
+                    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}`, rpcUrl: 'https://rpc-mumbai.maticvigil.com/', nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }, blockExplorerUrls: ['https://explorer-mumbai.maticvigil.com/'] }] });
+                    });
+
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            const votingAbi =[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "putVote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "registerCandidates",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "message",
+				"type": "string"
+			}
+		],
+		"name": "Success",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_voterAddress",
+				"type": "address"
+			}
+		],
+		"name": "whileListVoters",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidateList",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "candidateAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "votes",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "eventName",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVote",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voterList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "voted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "winnerAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+            
+            // Connect to Ethereum network through MetaMask
+            
+            
+            
+            // Define contract instance
+            const contractAddress = '0x191916340223252795E78e1d695a1aE0C9CDfF22'; // Replace with actual contract address
+            const votingContract = new web3.eth.Contract(votingAbi, contractAddress);
+
+            const voteradd = document.querySelector(".VoterAddress").value;
+
+            const accounts = await web3.eth.getAccounts();
+            const owner = accounts[0];
+            const gas = await votingContract.methods.whileListVoters(voteradd).estimateGas({ from: owner });
+            const result = await votingContract.methods.whileListVoters(voteradd).send({ from: owner, gas });
+            console.log(result.events.success.returnValue.msg);
+}
+
+
+
+// Call putVote function
+async function vote(candidateAddress) {
+    if (typeof window.ethereum !== "undefined") {
+                console.log("MetaMask is installed!");
+
+                try {
+                    await ethereum.request({ method: "eth_requestAccounts" });
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+
+                const accounts = await ethereum.request({ method: "eth_accounts" });
+                console.log("Connected to MetaMask:", accounts[0]);
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.enable();
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}` }] }).catch(async () => {
+                    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}`, rpcUrl: 'https://rpc-mumbai.maticvigil.com/', nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }, blockExplorerUrls: ['https://explorer-mumbai.maticvigil.com/'] }] });
+                    });
+
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            
+            const votingAbi =[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "putVote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "registerCandidates",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "message",
+				"type": "string"
+			}
+		],
+		"name": "Success",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_voterAddress",
+				"type": "address"
+			}
+		],
+		"name": "whileListVoters",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidateList",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "candidateAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "votes",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "eventName",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVote",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voterList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "voted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "winnerAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+            
+            // Connect to Ethereum network through MetaMask
+            
+            
+            
+            // Define contract instance
+            const contractAddress = '0x72ba34Ba80950D3Dd31cE7C1D0DB1fdf7efcEec4'; // Replace with actual contract address
+            const votingContract = new web3.eth.Contract(votingAbi, contractAddress);
+           const candidateAdd = document.querySelector(".candidateAddress").value;
+
+  const accounts = await web3.eth.getAccounts();
+  const voterAddress = accounts[0];
+  const gas = await votingContract.methods.putVote(candidateAdd).estimateGas({ from: voterAddress });
+  const result = await votingContract.methods.putVote(candidateAdd).send({ from: voterAddress, gas });
+
+  console.log(result.events.success.returnValues.msg);
+}
+
+async function winnerAddress(){
+    if (typeof window.ethereum !== "undefined") {
+                console.log("MetaMask is installed!");
+
+                try {
+                    await ethereum.request({ method: "eth_requestAccounts" });
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+
+                const accounts = await ethereum.request({ method: "eth_accounts" });
+                console.log("Connected to MetaMask:", accounts[0]);
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            if (window.ethereum) {
+                window.web3 = new Web3(window.ethereum);
+                try {
+                    await window.ethereum.enable();
+                    await window.ethereum.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}` }] }).catch(async () => {
+                    await window.ethereum.request({ method: 'wallet_addEthereumChain', params: [{ chainId: `0x${polygonNetworkId.toString(16)}`, rpcUrl: 'https://rpc-mumbai.maticvigil.com/', nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 }, blockExplorerUrls: ['https://explorer-mumbai.maticvigil.com/'] }] });
+                    });
+
+                    console.log("connect to metamask");
+                } catch (error) {
+                    console.log(error);
+                    return;
+                }
+            } else {
+                console.log("MetaMask is not installed!");
+                return;
+            }
+
+            
+            const votingAbi =[
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "putVote",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "string",
+				"name": "_name",
+				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "_age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "address",
+				"name": "_candidateAddress",
+				"type": "address"
+			}
+		],
+		"name": "registerCandidates",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"stateMutability": "nonpayable",
+		"type": "constructor"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "message",
+				"type": "string"
+			}
+		],
+		"name": "Success",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "_voterAddress",
+				"type": "address"
+			}
+		],
+		"name": "whileListVoters",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "candidateList",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "age",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "name",
+				"type": "string"
+			},
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "address",
+				"name": "candidateAddress",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "votes",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "candidates",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "eventName",
+		"outputs": [
+			{
+				"internalType": "string",
+				"name": "",
+				"type": "string"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "owner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "totalVote",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "voterList",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "registered",
+				"type": "bool"
+			},
+			{
+				"internalType": "bool",
+				"name": "voted",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "winnerAddress",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	}
+];
+            
+            // Connect to Ethereum network through MetaMask
+            
+            
+            
+            // Define contract instance
+            const contractAddress = '0x191916340223252795E78e1d695a1aE0C9CDfF22'; // Replace with actual contract address
+            const votingContract = new web3.eth.Contract(votingAbi, contractAddress);
+    
+
+
+  const accounts = await web3.eth.getAccounts();
+  const voterAddress = accounts[0];
+  const gas = await votingContract.methods.winnerAddress().estimateGas({ from: owner });
+  const result = await votingContract.methods.winnerAddress().call({ from: owner, gas });
+  console.log({candidateAddress:result.candidateAdd});
+//   return{error: false, message:{candidateAddress:result.candidateAdd}}
+    
+
+
+}
+
+
+    </script>
+</body>
+</html>
